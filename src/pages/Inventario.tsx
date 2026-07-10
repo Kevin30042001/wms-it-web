@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import EquipoForm from '@/components/EquipoForm'
+import FallaForm from '@/components/FallaForm'
 import ExcelImportButton from '@/components/ExcelImportButton'
 import ImportPreviewModal from '@/components/ImportPreviewModal'
 import { exportToExcel } from '@/lib/excelExport'
@@ -34,6 +35,7 @@ export default function Inventario() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editando, setEditando] = useState<Equipo | null>(null)
+  const [equipoParaFalla, setEquipoParaFalla] = useState<Equipo | null>(null)
   const [importRows, setImportRows] = useState<Record<string, unknown>[] | null>(null)
 
   async function cargar() {
@@ -274,6 +276,13 @@ export default function Inventario() {
                     <td className="px-3 py-2.5">
                       <div className="flex justify-end gap-1 text-xs">
                         <button
+                          onClick={() => setEquipoParaFalla(eq)}
+                          className="btn-secondary !px-2 !py-1"
+                          title="Reportar falla"
+                        >
+                          ⚠️
+                        </button>
+                        <button
                           onClick={() => {
                             setEditando(eq)
                             setFormOpen(true)
@@ -302,6 +311,17 @@ export default function Inventario() {
           usuarios={usuarios}
           centros={centros}
           onClose={() => setFormOpen(false)}
+          onSaved={cargar}
+        />
+      )}
+
+      {equipoParaFalla && (
+        <FallaForm
+          equipoPreseleccionado={equipoParaFalla}
+          equipos={equipos}
+          tipos={tipos}
+          usuarios={usuarios}
+          onClose={() => setEquipoParaFalla(null)}
           onSaved={cargar}
         />
       )}

@@ -92,8 +92,7 @@ export default function Inventario() {
       const cdTexto = String(r.cd ?? '').trim().toLowerCase()
       const cdMatch = centros.find((c) => c.nombre.toLowerCase() === cdTexto) ?? centros[0]
 
-      return {
-        codigo: r.codigo || null, // si viene ID del Excel, se respeta; si no, el trigger lo genera
+      const payloadRow: Record<string, unknown> = {
         tipo_equipo_id: tipoMatch?.id ?? null,
         marca: r.marca || tipoMatch?.marca || null,
         modelo: r.modelo || tipoMatch?.modelo || null,
@@ -104,9 +103,15 @@ export default function Inventario() {
         fecha_ingreso: r.fecha_ingreso || new Date().toISOString().slice(0, 10),
         observaciones: r.observaciones || null,
       }
+      // Solo incluir "codigo" si el Excel lo trae; así un re-import no borra
+      // el código ya asignado a un equipo existente que coincide por S/N.
+      if (r.codigo) payloadRow.codigo = r.codigo
+      return payloadRow
     })
 
-    const { error } = await supabase.from('equipos').insert(payload)
+    const { error } = await supabase
+      .from('equipos')
+      .upsert(payload, { onConflict: 'serie', ignoreDuplicates: false })
     if (error) throw error
     cargar()
   }

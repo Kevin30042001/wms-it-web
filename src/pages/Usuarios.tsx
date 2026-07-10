@@ -69,7 +69,9 @@ export default function Usuarios() {
       cd_id: cdDefault,
       activo: true,
     }))
-    const { error } = await supabase.from('usuarios_tecnicos').insert(payload)
+    const { error } = await supabase
+      .from('usuarios_tecnicos')
+      .upsert(payload, { onConflict: 'numero_usuario', ignoreDuplicates: false })
     if (error) throw error
     cargar()
   }

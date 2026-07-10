@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Modal from '@/components/Modal'
 import { supabase } from '@/lib/supabase'
+import { useUI } from '@/hooks/useUI'
 import type { Equipo, PrioridadFalla, TipoEquipo, UsuarioResumen } from '@/types/database'
 
 interface FallaFormProps {
@@ -22,6 +23,7 @@ export default function FallaForm({
   onClose,
   onSaved,
 }: FallaFormProps) {
+  const { toast } = useUI()
   const [busquedaSN, setBusquedaSN] = useState(equipoPreseleccionado?.serie ?? '')
   const [equipoId, setEquipoId] = useState(equipoPreseleccionado?.id ?? '')
   const [problema, setProblema] = useState('')
@@ -78,7 +80,9 @@ export default function FallaForm({
     }
 
     if (prioridad === 'CRÍTICA') {
-      alert(`⚠️ ALERTA CRÍTICA\n\nSe reportó una falla CRÍTICA para el equipo S/N: ${equipoSeleccionado?.serie}.\nRequiere atención inmediata.`)
+      toast('error', `Falla CRÍTICA registrada para el equipo S/N ${equipoSeleccionado?.serie}. Requiere atención inmediata.`)
+    } else {
+      toast('success', `Falla registrada para el equipo S/N ${equipoSeleccionado?.serie}.`)
     }
 
     onSaved()

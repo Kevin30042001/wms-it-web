@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Plus, Download, Pencil, ClipboardList, CircleCheck, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Modal from '@/components/Modal'
 import FallaForm from '@/components/FallaForm'
@@ -87,8 +88,8 @@ export default function Fallas() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">⚠️ Reporte de Fallas</h1>
-          <p className="text-sm text-slate-500">Registro y seguimiento de equipos dañados</p>
+          <h1 className="page-title">Reporte de fallas</h1>
+          <p className="page-sub">Registro y seguimiento de equipos dañados</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -115,21 +116,24 @@ export default function Fallas() {
             }
             className="btn-secondary"
           >
-            💾 Exportar
+            <Download size={15} /> Exportar
           </button>
           <button onClick={() => setFormOpen(true)} className="btn-primary">
-            ➕ Nueva Falla
+            <Plus size={15} /> Nueva falla
           </button>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <input
-          className="input max-w-xs"
-          placeholder="🔍 Buscar por S/N, ID o problema…"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
+        <div className="relative max-w-xs flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            className="input !pl-9"
+            placeholder="Buscar por S/N, ID o problema"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
         <select className="input max-w-[200px]" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
           <option value="">Todos los estados</option>
           {Object.keys(ESTADO_FALLA_ESTILO).map((s) => (
@@ -164,7 +168,9 @@ export default function Fallas() {
                 const cerrada = ['Resuelta', 'Cerrada', 'Irreparable'].includes(f.estado)
                 return (
                   <tr key={f.id}>
-                    <td className="px-3 py-2.5 font-mono text-xs font-semibold text-slate-700">{f.codigo}</td>
+                    <td className="px-3 py-2.5">
+                      <span className="tag-id">{f.codigo ?? '—'}</span>
+                    </td>
                     <td className="px-3 py-2.5 text-slate-500">
                       {new Date(f.fecha_reporte).toLocaleDateString('es-SV')}
                     </td>
@@ -179,17 +185,32 @@ export default function Fallas() {
                       <span className={`badge ${ESTADO_FALLA_ESTILO[f.estado]}`}>{f.estado}</span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex justify-end gap-1 text-xs">
-                        <button onClick={() => setDetalleFalla(f)} className="btn-secondary !px-2 !py-1">
-                          📋
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => setDetalleFalla(f)}
+                          className="btn-secondary btn-icon"
+                          title="Ver detalle"
+                          aria-label="Ver detalle"
+                        >
+                          <ClipboardList size={14} />
                         </button>
                         {!cerrada && (
                           <>
-                            <button onClick={() => setActualizarFalla(f)} className="btn-secondary !px-2 !py-1">
-                              ✏️
+                            <button
+                              onClick={() => setActualizarFalla(f)}
+                              className="btn-secondary btn-icon"
+                              title="Actualizar estado"
+                              aria-label="Actualizar estado"
+                            >
+                              <Pencil size={14} />
                             </button>
-                            <button onClick={() => setCerrarFalla(f)} className="btn-primary !px-2 !py-1">
-                              ✅
+                            <button
+                              onClick={() => setCerrarFalla(f)}
+                              className="btn-primary btn-icon"
+                              title="Cerrar falla"
+                              aria-label="Cerrar falla"
+                            >
+                              <CircleCheck size={14} />
                             </button>
                           </>
                         )}

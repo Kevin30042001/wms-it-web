@@ -1,8 +1,8 @@
 export default function Configuracion() {
   return (
     <div>
-      <h1 className="text-xl font-bold text-slate-800">⚙️ Configuración</h1>
-      <p className="mt-2 text-sm text-slate-500">Próximo módulo a construir.</p>
+      <h1 className="page-title">Configuración</h1>
+      <p className="page-sub">Próximo módulo: catálogo de tipos de equipo y prefijos de ID.</p>
     </div>
   )
 }

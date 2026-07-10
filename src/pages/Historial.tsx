@@ -1,8 +1,8 @@
 export default function Historial() {
   return (
     <div>
-      <h1 className="text-xl font-bold text-slate-800">📋 Historial</h1>
-      <p className="mt-2 text-sm text-slate-500">Próximo módulo a construir.</p>
+      <h1 className="page-title">Historial</h1>
+      <p className="page-sub">Próximo módulo: bitácora completa e inmutable del sistema.</p>
     </div>
   )
 }

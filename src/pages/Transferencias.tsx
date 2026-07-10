@@ -1,8 +1,8 @@
 export default function Transferencias() {
   return (
     <div>
-      <h1 className="text-xl font-bold text-slate-800">🔀 Transferencias</h1>
-      <p className="mt-2 text-sm text-slate-500">Próximo módulo a construir.</p>
+      <h1 className="page-title">Transferencias</h1>
+      <p className="page-sub">Próximo módulo: movimientos de equipos entre centros de distribución.</p>
     </div>
   )
 }

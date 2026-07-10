@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ScanBarcode } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function Login() {
@@ -18,19 +19,21 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-wmblue-dark px-4">
+    <div className="flex min-h-screen items-center justify-center bg-ink px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-wmyellow text-2xl font-black text-wmblue-dark">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-wmyellow font-display text-2xl font-bold text-ink">
             IT
           </div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="font-display text-3xl font-bold uppercase tracking-wider text-white">
             WMS<span className="text-wmyellow">·</span>IT
           </h1>
-          <p className="mt-1 text-sm text-white/60">Hortifruti CD Santa Tecla</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+            Hortifruti · CD Santa Tecla
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-6 shadow-xl">
+        <form onSubmit={handleSubmit} className="rounded-xl bg-white p-6 shadow-pop">
           <div className="mb-4">
             <label className="label">Correo</label>
             <input
@@ -55,15 +58,16 @@ export default function Login() {
             />
           </div>
           {error && (
-            <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+            <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
           <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
             {loading ? 'Ingresando…' : 'Ingresar'}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-white/40">
-          ¿No tienes cuenta? Pídele al administrador que la cree en Supabase.
+        <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-500">
+          <ScanBarcode size={13} />
+          Sistema de inventario TI · Walmart El Salvador
         </p>
       </div>
     </div>

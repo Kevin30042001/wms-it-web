@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Plus, Download, Pencil, Trash2, TriangleAlert, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useUI } from '@/hooks/useUI'
 import EquipoForm from '@/components/EquipoForm'
 import FallaForm from '@/components/FallaForm'
 import ExcelImportButton from '@/components/ExcelImportButton'
@@ -23,13 +26,15 @@ const ESTADO_ESTILO: Record<EstadoEquipo, string> = {
 }
 
 export default function Inventario() {
+  const [searchParams] = useSearchParams()
+  const { toast, confirm } = useUI()
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [tipos, setTipos] = useState<TipoEquipo[]>([])
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([])
   const [centros, setCentros] = useState<CentroDistribucion[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useState(searchParams.get('q') ?? '')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
 
@@ -52,6 +57,11 @@ export default function Inventario() {
     if (cRes.data) setCentros(cRes.data as CentroDistribucion[])
     setLoading(false)
   }
+
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) setBusqueda(q)
+  }, [searchParams])
 
   useEffect(() => {
     cargar()
@@ -79,8 +89,16 @@ export default function Inventario() {
   })
 
   async function eliminar(eq: Equipo) {
-    if (!confirm(`¿Eliminar el equipo S/N: ${eq.serie}? Esta acción queda registrada en el historial.`)) return
-    await supabase.from('equipos').delete().eq('id', eq.id)
+    const ok = await confirm({
+      title: 'Eliminar equipo',
+      message: `Se eliminará el equipo S/N ${eq.serie}. Esta acción queda registrada en el historial.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    })
+    if (!ok) return
+    const { error } = await supabase.from('equipos').delete().eq('id', eq.id)
+    if (error) toast('error', `No se pudo eliminar: ${error.message}`)
+    else toast('success', `Equipo ${eq.serie} eliminado.`)
     cargar()
   }
 
@@ -128,10 +146,12 @@ export default function Inventario() {
 
     const descartados = payload.length - payloadSinDuplicados.length
     if (descartados > 0) {
-      alert(
-        `Se importaron ${payloadSinDuplicados.length} equipos. ` +
-          `${descartados} fila(s) tenían un S/N repetido dentro del mismo Excel y se combinaron en un solo registro (se usó la última).`
+      toast(
+        'info',
+        `Se importaron ${payloadSinDuplicados.length} equipos. ${descartados} fila(s) con S/N repetido en el Excel se combinaron en un solo registro.`
       )
+    } else {
+      toast('success', `${payloadSinDuplicados.length} equipos importados correctamente.`)
     }
     cargar()
   }
@@ -140,8 +160,8 @@ export default function Inventario() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">📦 Inventario de Equipos</h1>
-          <p className="text-sm text-slate-500">{equipos.length} equipo(s) registrados</p>
+          <h1 className="page-title">Inventario de equipos</h1>
+          <p className="page-sub">{equipos.length} equipo(s) registrados</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ExcelImportButton
@@ -193,7 +213,7 @@ export default function Inventario() {
             }
             className="btn-secondary"
           >
-            💾 Exportar
+            <Download size={15} /> Exportar
           </button>
           <button
             onClick={() => {
@@ -202,18 +222,21 @@ export default function Inventario() {
             }}
             className="btn-primary"
           >
-            ➕ Agregar
+            <Plus size={15} /> Agregar equipo
           </button>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <input
-          className="input max-w-xs"
-          placeholder="🔍 Buscar por S/N, tipo, usuario…"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
+        <div className="relative max-w-xs flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            className="input !pl-9"
+            placeholder="Buscar por S/N, tipo o usuario"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
         <select className="input max-w-[200px]" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
           <option value="">Todos los tipos</option>
           {tipos.map((t) => (
@@ -264,7 +287,9 @@ export default function Inventario() {
                 const centro = centroPorId.get(eq.cd_id ?? '')
                 return (
                   <tr key={eq.id}>
-                    <td className="px-3 py-2.5 font-mono text-xs font-semibold text-slate-700">{eq.codigo}</td>
+                    <td className="px-3 py-2.5">
+                      <span className="tag-id">{eq.codigo ?? '—'}</span>
+                    </td>
                     <td className="px-3 py-2.5 text-slate-600">{tipo?.tipo ?? '—'}</td>
                     <td className="px-3 py-2.5 text-slate-600">{eq.modelo ?? tipo?.modelo ?? '—'}</td>
                     <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{eq.serie}</td>
@@ -274,25 +299,33 @@ export default function Inventario() {
                       <span className={`badge ${ESTADO_ESTILO[eq.estado]}`}>{eq.estado}</span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex justify-end gap-1 text-xs">
+                      <div className="flex justify-end gap-1">
                         <button
                           onClick={() => setEquipoParaFalla(eq)}
-                          className="btn-secondary !px-2 !py-1"
+                          className="btn-secondary btn-icon"
                           title="Reportar falla"
+                          aria-label="Reportar falla"
                         >
-                          ⚠️
+                          <TriangleAlert size={14} className="text-estado-reparacion" />
                         </button>
                         <button
                           onClick={() => {
                             setEditando(eq)
                             setFormOpen(true)
                           }}
-                          className="btn-secondary !px-2 !py-1"
+                          className="btn-secondary btn-icon"
+                          title="Editar"
+                          aria-label="Editar equipo"
                         >
-                          ✏️
+                          <Pencil size={14} />
                         </button>
-                        <button onClick={() => eliminar(eq)} className="btn-danger !px-2 !py-1">
-                          🗑️
+                        <button
+                          onClick={() => eliminar(eq)}
+                          className="btn-danger btn-icon"
+                          title="Eliminar"
+                          aria-label="Eliminar equipo"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>

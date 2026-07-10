@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Plus, Download, Pencil, UserX, ClipboardList, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useUI } from '@/hooks/useUI'
 import UsuarioForm from '@/components/UsuarioForm'
 import Modal from '@/components/Modal'
 import ExcelImportButton from '@/components/ExcelImportButton'
@@ -8,6 +10,7 @@ import { exportToExcel } from '@/lib/excelExport'
 import type { CentroDistribucion, Equipo, UsuarioResumen, UsuarioTecnico } from '@/types/database'
 
 export default function Usuarios() {
+  const { toast, confirm } = useUI()
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([])
   const [centros, setCentros] = useState<CentroDistribucion[]>([])
   const [loading, setLoading] = useState(true)
@@ -49,8 +52,15 @@ export default function Usuarios() {
   }
 
   async function desactivar(u: UsuarioResumen) {
-    if (!confirm(`¿Desactivar a ${u.nombre_completo}? Sus equipos quedarán sin usuario asignado o los podrás reasignar luego.`)) return
+    const ok = await confirm({
+      title: 'Desactivar usuario',
+      message: `${u.nombre_completo} dejará de aparecer en las listas de asignación. Sus equipos actuales no se tocan.`,
+      confirmLabel: 'Desactivar',
+      danger: true,
+    })
+    if (!ok) return
     await supabase.from('usuarios_tecnicos').update({ activo: false }).eq('id', u.id)
+    toast('success', `${u.nombre_completo} desactivado.`)
     cargar()
   }
 
@@ -92,8 +102,8 @@ export default function Usuarios() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">👤 Usuarios</h1>
-          <p className="text-sm text-slate-500">Personal técnico y equipos asignados</p>
+          <h1 className="page-title">Usuarios</h1>
+          <p className="page-sub">Personal técnico y equipos asignados</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ExcelImportButton
@@ -127,7 +137,7 @@ export default function Usuarios() {
             }
             className="btn-secondary"
           >
-            💾 Exportar
+            <Download size={15} /> Exportar
           </button>
           <button
             onClick={() => {
@@ -136,17 +146,20 @@ export default function Usuarios() {
             }}
             className="btn-primary"
           >
-            ➕ Agregar Usuario
+            <Plus size={15} /> Agregar usuario
           </button>
         </div>
       </div>
 
-      <input
-        className="input max-w-sm"
-        placeholder="🔍 Buscar por nombre, N° usuario o cargo…"
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-      />
+      <div className="relative max-w-sm">
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          className="input !pl-9"
+          placeholder="Buscar por nombre, N° usuario o cargo"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+      </div>
 
       <div className="card overflow-x-auto p-0">
         {loading ? (
@@ -188,22 +201,34 @@ export default function Usuarios() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-1 text-xs">
-                      <button onClick={() => abrirPerfil(u)} className="btn-secondary !px-2 !py-1">
-                        📋 Perfil
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => abrirPerfil(u)}
+                        className="btn-secondary btn-icon"
+                        title="Ver perfil"
+                        aria-label="Ver perfil"
+                      >
+                        <ClipboardList size={14} />
                       </button>
                       <button
                         onClick={() => {
                           setEditando(u)
                           setFormOpen(true)
                         }}
-                        className="btn-secondary !px-2 !py-1"
+                        className="btn-secondary btn-icon"
+                        title="Editar"
+                        aria-label="Editar usuario"
                       >
-                        ✏️
+                        <Pencil size={14} />
                       </button>
                       {u.activo && (
-                        <button onClick={() => desactivar(u)} className="btn-danger !px-2 !py-1">
-                          🚫
+                        <button
+                          onClick={() => desactivar(u)}
+                          className="btn-danger btn-icon"
+                          title="Desactivar"
+                          aria-label="Desactivar usuario"
+                        >
+                          <UserX size={14} />
                         </button>
                       )}
                     </div>

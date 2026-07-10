@@ -69,9 +69,21 @@ export default function Usuarios() {
       cd_id: cdDefault,
       activo: true,
     }))
+
+    // Separamos: filas CON número de usuario (pueden chocar en el upsert si
+    // se repiten dentro del mismo Excel) de las que no tienen (esas nunca
+    // generan conflicto, se insertan todas tal cual).
+    const conNumero = new Map<string, Record<string, unknown>>()
+    const sinNumero: Record<string, unknown>[] = []
+    for (const row of payload) {
+      if (row.numero_usuario) conNumero.set(row.numero_usuario as string, row)
+      else sinNumero.push(row)
+    }
+    const payloadFinal = [...conNumero.values(), ...sinNumero]
+
     const { error } = await supabase
       .from('usuarios_tecnicos')
-      .upsert(payload, { onConflict: 'numero_usuario', ignoreDuplicates: false })
+      .upsert(payloadFinal, { onConflict: 'numero_usuario', ignoreDuplicates: false })
     if (error) throw error
     cargar()
   }

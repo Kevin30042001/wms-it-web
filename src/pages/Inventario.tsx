@@ -109,10 +109,28 @@ export default function Inventario() {
       return payloadRow
     })
 
+    // Postgres rechaza un upsert si el MISMO lote trae el mismo S/N repetido
+    // más de una vez (ON CONFLICT no sabe a cuál fila darle prioridad).
+    // Nos quedamos con la última ocurrencia de cada S/N dentro del archivo.
+    const porSerie = new Map<string, Record<string, unknown>>()
+    for (const row of payload) {
+      const serie = String(row.serie ?? '').trim()
+      if (serie) porSerie.set(serie, row)
+    }
+    const payloadSinDuplicados = Array.from(porSerie.values())
+
     const { error } = await supabase
       .from('equipos')
-      .upsert(payload, { onConflict: 'serie', ignoreDuplicates: false })
+      .upsert(payloadSinDuplicados, { onConflict: 'serie', ignoreDuplicates: false })
     if (error) throw error
+
+    const descartados = payload.length - payloadSinDuplicados.length
+    if (descartados > 0) {
+      alert(
+        `Se importaron ${payloadSinDuplicados.length} equipos. ` +
+          `${descartados} fila(s) tenían un S/N repetido dentro del mismo Excel y se combinaron en un solo registro (se usó la última).`
+      )
+    }
     cargar()
   }
 

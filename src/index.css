@@ -101,3 +101,43 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ══════════ MODO OSCURO ══════════ */
+.dark body, .dark { color-scheme: dark; }
+.dark .bg-surface, .dark body { background-color: #0F172A; }
+
+/* Superficies y componentes centrales */
+.dark .card { background-color: #1E293B; border-color: #334155; }
+.dark .input {
+  background-color: #0F172A; border-color: #334155; color: #E2E8F0;
+}
+.dark .input::placeholder { color: #64748B; }
+.dark .btn-secondary {
+  background-color: #1E293B; border-color: #334155; color: #CBD5E1;
+}
+.dark .btn-secondary:hover { background-color: #334155; }
+.dark .tag-id { background-color: #0F172A; border-color: #475569; color: #CBD5E1; }
+.dark .skeleton { background-color: rgb(51 65 85 / 0.6); }
+.dark .tabla thead { background-color: #0F172A; }
+.dark kbd { background-color: #0F172A !important; border-color: #334155 !important; }
+
+/* Overrides de utilidades comunes usadas en las páginas */
+.dark .bg-white { background-color: #1E293B; }
+.dark .bg-slate-50 { background-color: #0F172A; }
+.dark .bg-slate-100 { background-color: #334155; }
+.dark .text-slate-900, .dark .text-slate-800 { color: #F1F5F9; }
+.dark .text-slate-700, .dark .text-slate-600 { color: #CBD5E1; }
+.dark .text-slate-500 { color: #94A3B8; }
+.dark .border-slate-200, .dark .border-slate-100,
+.dark .border-slate-200\/80, .dark .border-slate-300 { border-color: #334155; }
+.dark .divide-slate-100 > * + * { border-color: #334155; }
+.dark .hover\:bg-slate-50:hover, .dark .hover\:bg-slate-50\/70:hover,
+.dark .hover\:bg-slate-100:hover { background-color: #334155; }
+.dark .hover\:bg-slate-200:hover { background-color: #475569; }
+
+/* Badges de estado: fondos oscuros equivalentes */
+.dark .bg-green-50 { background-color: rgb(30 158 85 / 0.15); }
+.dark .bg-orange-50 { background-color: rgb(232 113 10 / 0.15); }
+.dark .bg-red-50 { background-color: rgb(217 48 37 / 0.18); }
+.dark .bg-blue-50 { background-color: rgb(0 112 206 / 0.18); }
+.dark .bg-amber-50 { background-color: rgb(180 83 9 / 0.18); }

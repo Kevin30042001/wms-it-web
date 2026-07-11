@@ -4,6 +4,7 @@ import { UIProvider } from '@/hooks/useUI'
 import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
+import Escaneo from '@/pages/Escaneo'
 import Inventario from '@/pages/Inventario'
 import Usuarios from '@/pages/Usuarios'
 import Fallas from '@/pages/Fallas'
@@ -29,6 +30,7 @@ function PrivateRoutes() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
+        <Route path="/escaneo" element={<Escaneo />} />
         <Route path="/inventario" element={<Inventario />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/fallas" element={<Fallas />} />

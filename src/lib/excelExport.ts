@@ -1,14 +1,12 @@
-import * as XLSX from 'xlsx'
+// Exportación a Excel. SheetJS se carga dinámicamente (import()) para no
+// engordar el bundle inicial de la app.
 
-/**
- * Descarga un array de objetos como archivo .xlsx (una sola hoja).
- * Uso: exportToExcel(equipos, 'Inventario', 'Inventario_WMS-IT')
- */
-export function exportToExcel(
+export async function exportToExcel(
   rows: Record<string, unknown>[],
   sheetName: string,
   fileBaseName: string
 ) {
+  const XLSX = await import('xlsx')
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, sheetName)
@@ -17,10 +15,11 @@ export function exportToExcel(
 }
 
 /** Exporta varias hojas en un solo libro: [{ name, rows }, ...] */
-export function exportMultiSheetExcel(
+export async function exportMultiSheetExcel(
   sheets: { name: string; rows: Record<string, unknown>[] }[],
   fileBaseName: string
 ) {
+  const XLSX = await import('xlsx')
   const wb = XLSX.utils.book_new()
   for (const s of sheets) {
     const ws = XLSX.utils.json_to_sheet(s.rows)

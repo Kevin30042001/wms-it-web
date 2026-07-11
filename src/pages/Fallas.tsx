@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Download, Pencil, ClipboardList, CircleCheck, Search } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Plus, Download, Pencil, ClipboardList, CircleCheck, Search, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { generarPDF } from '@/lib/pdf'
 import Modal from '@/components/Modal'
 import FallaForm from '@/components/FallaForm'
 import CerrarFallaModal from '@/components/CerrarFallaModal'
@@ -26,6 +28,7 @@ const ESTADO_FALLA_ESTILO: Record<EstadoFalla, string> = {
 const ESTADOS_ACTUALIZABLES: EstadoFalla[] = ['Reportada', 'En diagnóstico', 'En reparación']
 
 export default function Fallas() {
+  const [searchParams] = useSearchParams()
   const [fallas, setFallas] = useState<Falla[]>([])
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [tipos, setTipos] = useState<TipoEquipo[]>([])
@@ -54,6 +57,10 @@ export default function Fallas() {
     if (uRes.data) setUsuarios(uRes.data as UsuarioResumen[])
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (searchParams.get('nueva')) setFormOpen(true)
+  }, [searchParams])
 
   useEffect(() => {
     cargar()
@@ -117,6 +124,30 @@ export default function Fallas() {
             className="btn-secondary"
           >
             <Download size={15} /> Exportar
+          </button>
+          <button
+            onClick={() =>
+              generarPDF({
+                titulo: 'Reporte de fallas',
+                archivo: 'Reporte_Fallas',
+                columnas: ['ID', 'Fecha', 'S/N', 'Problema', 'Prioridad', 'Estado', 'Solución'],
+                filas: filtradas.map((f) => {
+                  const eq = equipoPorId.get(f.equipo_id ?? '')
+                  return [
+                    f.codigo,
+                    new Date(f.fecha_reporte).toLocaleDateString('es-SV'),
+                    eq?.serie,
+                    f.problema,
+                    f.prioridad,
+                    f.estado,
+                    f.solucion,
+                  ]
+                }),
+              })
+            }
+            className="btn-secondary"
+          >
+            <FileText size={15} /> PDF
           </button>
           <button onClick={() => setFormOpen(true)} className="btn-primary">
             <Plus size={15} /> Nueva falla

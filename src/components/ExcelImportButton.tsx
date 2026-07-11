@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import * as XLSX from 'xlsx'
 
 interface ExcelImportProps {
   /** Nombre(s) de hoja a buscar dentro del libro, en orden de preferencia */
@@ -29,6 +28,7 @@ export default function ExcelImportButton({ sheetNames, startRow, mapRow, onPars
     setFileName(file.name)
 
     try {
+      const XLSX = await import('xlsx')
       const buffer = await file.arrayBuffer()
       const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, Download, Pencil, UserX, ClipboardList, Search } from 'lucide-react'
+import { Plus, Download, Pencil, UserX, ClipboardList, Search, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUI } from '@/hooks/useUI'
 import UsuarioForm from '@/components/UsuarioForm'
+import { generarPDF } from '@/lib/pdf'
 import Modal from '@/components/Modal'
 import ExcelImportButton from '@/components/ExcelImportButton'
 import ImportPreviewModal from '@/components/ImportPreviewModal'
@@ -138,6 +139,27 @@ export default function Usuarios() {
             className="btn-secondary"
           >
             <Download size={15} /> Exportar
+          </button>
+          <button
+            onClick={() =>
+              generarPDF({
+                titulo: 'Equipos por usuario',
+                archivo: 'Equipos_Por_Usuario',
+                orientacion: 'portrait',
+                columnas: ['Nombre', 'N° Usuario', 'Cargo', 'Equipos', 'Fallas', 'Activo'],
+                filas: filtrados.map((u) => [
+                  u.nombre_completo,
+                  u.numero_usuario,
+                  u.cargo,
+                  u.equipos_asignados,
+                  u.fallas_reportadas,
+                  u.activo ? 'Sí' : 'No',
+                ]),
+              })
+            }
+            className="btn-secondary"
+          >
+            <FileText size={15} /> PDF
           </button>
           <button
             onClick={() => {

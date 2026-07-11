@@ -18,8 +18,10 @@ import {
   Tags,
   ArrowLeftRight,
   BatteryFull,
+  FileText,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { generarPDF } from '@/lib/pdf'
 import type { DashboardKPIs, EquiposPorEstado, EquiposPorTipo, HistorialEntry } from '@/types/database'
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
@@ -104,9 +106,31 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="page-title">Panel de control</h1>
-        <p className="page-sub">Resumen general — Hortifruti CD Santa Tecla</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="page-title">Panel de control</h1>
+          <p className="page-sub">Resumen general — Hortifruti CD Santa Tecla</p>
+        </div>
+        <button
+          onClick={() =>
+            generarPDF({
+              titulo: 'Resumen ejecutivo',
+              archivo: 'Resumen_Ejecutivo',
+              orientacion: 'portrait',
+              columnas: ['Indicador', 'Valor'],
+              filas: [
+                ...tarjetas.map((t) => [t.label, t.value] as [string, number]),
+                ['— Equipos por estado —', ''],
+                ...porEstado.map((e) => [e.estado, e.cantidad] as [string, number]),
+                ['— Equipos por tipo —', ''],
+                ...porTipo.map((t) => [t.tipo, t.cantidad] as [string, number]),
+              ],
+            })
+          }
+          className="btn-secondary"
+        >
+          <FileText size={15} /> Resumen ejecutivo (PDF)
+        </button>
       </div>
 
       {loading ? (

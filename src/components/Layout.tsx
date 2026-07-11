@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -10,15 +10,19 @@ import {
   ScrollText,
   Settings,
   ScanBarcode,
+  ScanLine,
   LogOut,
   Menu,
   X,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import GlobalScan from '@/components/GlobalScan'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/escaneo', label: 'Escaneo', icon: ScanLine },
   { to: '/inventario', label: 'Inventario', icon: Package },
   { to: '/usuarios', label: 'Usuarios', icon: Users },
   { to: '/fallas', label: 'Fallas', icon: TriangleAlert },
@@ -69,7 +73,33 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function Layout() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [oscuro, setOscuro] = useState(() => localStorage.getItem('wms-theme') === 'dark')
+
+  // Aplicar/persistir tema
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', oscuro)
+    localStorage.setItem('wms-theme', oscuro ? 'dark' : 'light')
+  }, [oscuro])
+
+  // Atajos de teclado: N = nuevo equipo, F = nueva falla
+  // (solo minúsculas y como tecla aislada, para no chocar con ráfagas del escáner)
+  useEffect(() => {
+    let ultimaTecla = 0
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement
+      const enCampo = ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable
+      const ahora = Date.now()
+      const esRafaga = ahora - ultimaTecla < 100
+      ultimaTecla = ahora
+      if (enCampo || e.ctrlKey || e.metaKey || e.altKey || esRafaga) return
+      if (e.key === 'n') navigate('/inventario?nuevo=1')
+      if (e.key === 'f') navigate('/fallas?nueva=1')
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [navigate])
 
   const brand = (
     <div className="flex items-center gap-2.5 px-5 py-5">
@@ -107,6 +137,14 @@ export default function Layout() {
           {user?.email?.[0]?.toUpperCase() ?? '?'}
         </div>
         <span className="min-w-0 flex-1 truncate text-xs text-slate-400">{user?.email}</span>
+        <button
+          onClick={() => setOscuro(!oscuro)}
+          className="rounded p-1.5 text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
+          title={oscuro ? 'Modo claro' : 'Modo oscuro'}
+          aria-label="Cambiar tema"
+        >
+          {oscuro ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
         <button
           onClick={() => signOut()}
           className="rounded p-1.5 text-slate-500 transition-colors hover:bg-white/10 hover:text-white"

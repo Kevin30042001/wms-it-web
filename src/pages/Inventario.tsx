@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Download, Pencil, Trash2, TriangleAlert, Search } from 'lucide-react'
+import { Plus, Download, Pencil, Trash2, TriangleAlert, Search, FileText, Barcode } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUI } from '@/hooks/useUI'
 import EquipoForm from '@/components/EquipoForm'
 import FallaForm from '@/components/FallaForm'
+import EtiquetaModal from '@/components/EtiquetaModal'
 import ExcelImportButton from '@/components/ExcelImportButton'
 import ImportPreviewModal from '@/components/ImportPreviewModal'
 import { exportToExcel } from '@/lib/excelExport'
+import { generarPDF } from '@/lib/pdf'
 import type {
   CentroDistribucion,
   Equipo,
@@ -41,6 +43,7 @@ export default function Inventario() {
   const [formOpen, setFormOpen] = useState(false)
   const [editando, setEditando] = useState<Equipo | null>(null)
   const [equipoParaFalla, setEquipoParaFalla] = useState<Equipo | null>(null)
+  const [equipoParaEtiqueta, setEquipoParaEtiqueta] = useState<Equipo | null>(null)
   const [importRows, setImportRows] = useState<Record<string, unknown>[] | null>(null)
 
   async function cargar() {
@@ -61,6 +64,10 @@ export default function Inventario() {
   useEffect(() => {
     const q = searchParams.get('q')
     if (q) setBusqueda(q)
+    if (searchParams.get('nuevo')) {
+      setEditando(null)
+      setFormOpen(true)
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -216,6 +223,33 @@ export default function Inventario() {
             <Download size={15} /> Exportar
           </button>
           <button
+            onClick={() =>
+              generarPDF({
+                titulo: 'Inventario general',
+                archivo: 'Inventario_General',
+                columnas: ['ID', 'Tipo', 'Modelo', 'S/N', 'Usuario', 'CD', 'Estado', 'Ingreso'],
+                filas: filtrados.map((eq) => {
+                  const tipo = tipoPorId.get(eq.tipo_equipo_id ?? '')
+                  const usuario = usuarioPorId.get(eq.usuario_id ?? '')
+                  const centro = centroPorId.get(eq.cd_id ?? '')
+                  return [
+                    eq.codigo,
+                    tipo?.tipo,
+                    eq.modelo ?? tipo?.modelo,
+                    eq.serie,
+                    usuario?.nombre_completo,
+                    centro?.nombre,
+                    eq.estado,
+                    eq.fecha_ingreso,
+                  ]
+                }),
+              })
+            }
+            className="btn-secondary"
+          >
+            <FileText size={15} /> PDF
+          </button>
+          <button
             onClick={() => {
               setEditando(null)
               setFormOpen(true)
@@ -301,6 +335,14 @@ export default function Inventario() {
                     <td className="px-3 py-2.5">
                       <div className="flex justify-end gap-1">
                         <button
+                          onClick={() => setEquipoParaEtiqueta(eq)}
+                          className="btn-secondary btn-icon"
+                          title="Etiqueta imprimible"
+                          aria-label="Etiqueta imprimible"
+                        >
+                          <Barcode size={14} />
+                        </button>
+                        <button
                           onClick={() => setEquipoParaFalla(eq)}
                           className="btn-secondary btn-icon"
                           title="Reportar falla"
@@ -346,6 +388,10 @@ export default function Inventario() {
           onClose={() => setFormOpen(false)}
           onSaved={cargar}
         />
+      )}
+
+      {equipoParaEtiqueta && (
+        <EtiquetaModal equipo={equipoParaEtiqueta} onClose={() => setEquipoParaEtiqueta(null)} />
       )}
 
       {equipoParaFalla && (

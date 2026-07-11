@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ScanBarcode, Search, ArrowRight } from 'lucide-react'
+import { ScanBarcode, Search, ArrowRight, Camera, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Equipo, EstadoEquipo } from '@/types/database'
 
@@ -25,6 +25,8 @@ export default function GlobalScan() {
   const [query, setQuery] = useState('')
   const [resultados, setResultados] = useState<Equipo[]>([])
   const [buscando, setBuscando] = useState(false)
+  const [camaraAbierta, setCamaraAbierta] = useState(false)
+  const camaraRef = useRef<{ stop: () => Promise<void> } | null>(null)
   const navigate = useNavigate()
 
   const buffer = useRef('')
@@ -47,6 +49,37 @@ export default function GlobalScan() {
     setResultados((data as Equipo[]) ?? [])
     setBuscando(false)
   }, [])
+
+  // Escáner por cámara (html5-qrcode, carga dinámica)
+  useEffect(() => {
+    if (!camaraAbierta) return
+    let activo = true
+    ;(async () => {
+      const { Html5Qrcode } = await import('html5-qrcode')
+      if (!activo) return
+      const scanner = new Html5Qrcode('camara-scan')
+      camaraRef.current = scanner
+      try {
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 120 } },
+          (texto) => {
+            setQuery(texto)
+            buscar(texto)
+            setCamaraAbierta(false)
+          },
+          () => {}
+        )
+      } catch {
+        setCamaraAbierta(false)
+      }
+    })()
+    return () => {
+      activo = false
+      camaraRef.current?.stop().catch(() => {})
+      camaraRef.current = null
+    }
+  }, [camaraAbierta, buscar])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -133,10 +166,24 @@ export default function GlobalScan() {
               debounce.current = setTimeout(() => buscar(e.target.value), 250)
             }}
           />
+          <button
+            onClick={() => setCamaraAbierta(!camaraAbierta)}
+            className="shrink-0 rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-wmblue"
+            title="Escanear con la cámara"
+            aria-label="Escanear con la cámara"
+          >
+            {camaraAbierta ? <X size={17} /> : <Camera size={17} />}
+          </button>
           <kbd className="shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-400">
             ESC
           </kbd>
         </div>
+
+        {camaraAbierta && (
+          <div className="border-b border-slate-100 bg-black">
+            <div id="camara-scan" className="mx-auto max-w-sm" />
+          </div>
+        )}
 
         <div className="max-h-80 overflow-y-auto">
           {buscando ? (

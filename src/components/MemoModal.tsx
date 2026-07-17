@@ -2,7 +2,14 @@ import { useState, type FormEvent } from 'react'
 import { FileDown } from 'lucide-react'
 import Modal from '@/components/Modal'
 import { useUI } from '@/hooks/useUI'
-import { descargarMemoDocx, type MemoEquipoFila } from '@/lib/memoDocx'
+import { supabase } from '@/lib/supabase'
+import {
+  generarMemoBlob,
+  descargarBlob,
+  nombreArchivoMemo,
+  type MemoEquipoFila,
+  type MemoDatos,
+} from '@/lib/memoDocx'
 import type { CentroDistribucion } from '@/types/database'
 
 const CUERPO_DEFAULT =
@@ -45,7 +52,7 @@ export default function MemoModal({
     }
     setGenerando(true)
     try {
-      await descargarMemoDocx({
+      const datos: MemoDatos = {
         para: para.trim(),
         de: de.trim(),
         cc: cc.trim(),
@@ -56,8 +63,34 @@ export default function MemoModal({
         extras: extras.split('\n'),
         autorizado1: autorizado1.trim(),
         autorizado2: autorizado2.trim(),
+      }
+      const blob = await generarMemoBlob(datos)
+      const nombre = nombreArchivoMemo(datos)
+      descargarBlob(blob, nombre)
+
+      // Archivar: subir el .docx exacto a Storage y registrar en el historial
+      const hora = new Date().toISOString().slice(11, 19).replace(/:/g, '')
+      const path = `memorandos/${new Date().getFullYear()}/${nombre.replace('.docx', `_${hora}.docx`)}`
+      const { error: upErr } = await supabase.storage.from('documentos').upload(path, blob, {
+        contentType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       })
-      toast('success', 'Memorando descargado.')
+      const { error: dbErr } = await supabase.from('memorandos').insert({
+        cd_destino: datos.para,
+        asunto: datos.asunto,
+        num_equipos: filas.length,
+        series_texto: filas.map((f) => f.serie).join(' '),
+        datos,
+        archivo_path: upErr ? null : path,
+      })
+      if (upErr || dbErr) {
+        toast(
+          'info',
+          'Memorando descargado, pero no se pudo archivar en el historial. Revisa que corriste sql/03_documentos.sql.'
+        )
+      } else {
+        toast('success', 'Memorando descargado y archivado en Documentos.')
+      }
       onClose()
     } catch {
       toast('error', 'No se pudo generar el memorando. Intenta de nuevo.')

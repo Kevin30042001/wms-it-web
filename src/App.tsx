@@ -11,6 +11,7 @@ import Fallas from '@/pages/Fallas'
 import Consumibles from '@/pages/Consumibles'
 import Transferencias from '@/pages/Transferencias'
 import Historial from '@/pages/Historial'
+import Documentos from '@/pages/Documentos'
 import Configuracion from '@/pages/Configuracion'
 
 function PrivateRoutes() {
@@ -36,6 +37,7 @@ function PrivateRoutes() {
         <Route path="/fallas" element={<Fallas />} />
         <Route path="/consumibles" element={<Consumibles />} />
         <Route path="/transferencias" element={<Transferencias />} />
+        <Route path="/documentos" element={<Documentos />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/configuracion" element={<Configuracion />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -30,7 +30,23 @@ const ANCHO_TABLA = 10204
 const COLS_EQUIPOS = [3204, 2500, 1800, 2700] // Características, Modelo, Marca, Serie
 const COL_FIRMA = Math.floor(ANCHO_TABLA / 4)
 
-export async function descargarMemoDocx(datos: MemoDatos) {
+export function nombreArchivoMemo(datos: MemoDatos) {
+  const cdSlug = datos.para.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '')
+  const fechaSlug = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  return `Salida_${cdSlug}_${fechaSlug}.docx`
+}
+
+export function descargarBlob(blob: Blob, nombre: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nombre
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Construye el memorando y devuelve el archivo como Blob (sin descargarlo). */
+export async function generarMemoBlob(datos: MemoDatos): Promise<Blob> {
   const {
     Document,
     Packer,
@@ -188,13 +204,11 @@ export async function descargarMemoDocx(datos: MemoDatos) {
     ],
   })
 
-  const blob = await Packer.toBlob(doc)
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  const cdSlug = datos.para.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '')
-  const fechaSlug = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-  a.href = url
-  a.download = `Salida_${cdSlug}_${fechaSlug}.docx`
-  a.click()
-  URL.revokeObjectURL(url)
+  return Packer.toBlob(doc)
+}
+
+/** Genera el memorando y lo descarga de una vez. */
+export async function descargarMemoDocx(datos: MemoDatos) {
+  const blob = await generarMemoBlob(datos)
+  descargarBlob(blob, nombreArchivoMemo(datos))
 }

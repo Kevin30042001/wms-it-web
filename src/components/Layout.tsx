@@ -7,6 +7,7 @@ import {
   TriangleAlert,
   Tags,
   ArrowLeftRight,
+  FolderOpen,
   ScrollText,
   Settings,
   ScanBarcode,
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { to: '/fallas', label: 'Fallas', icon: TriangleAlert },
   { to: '/consumibles', label: 'Consumibles', icon: Tags },
   { to: '/transferencias', label: 'Transferencias', icon: ArrowLeftRight },
+  { to: '/documentos', label: 'Documentos', icon: FolderOpen },
   { to: '/historial', label: 'Historial', icon: ScrollText },
   { to: '/configuracion', label: 'Configuración', icon: Settings },
 ]

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Download, Pencil, Trash2, TriangleAlert, Search, FileText, Barcode } from 'lucide-react'
+import { Plus, Download, Pencil, Trash2, TriangleAlert, Search, FileText, Barcode, FileDown, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUI } from '@/hooks/useUI'
 import EquipoForm from '@/components/EquipoForm'
@@ -8,6 +8,7 @@ import FallaForm from '@/components/FallaForm'
 import EtiquetaModal from '@/components/EtiquetaModal'
 import ExcelImportButton from '@/components/ExcelImportButton'
 import ImportPreviewModal from '@/components/ImportPreviewModal'
+import MemoModal from '@/components/MemoModal'
 import { exportToExcel } from '@/lib/excelExport'
 import { generarPDF } from '@/lib/pdf'
 import type {
@@ -45,6 +46,8 @@ export default function Inventario() {
   const [equipoParaFalla, setEquipoParaFalla] = useState<Equipo | null>(null)
   const [equipoParaEtiqueta, setEquipoParaEtiqueta] = useState<Equipo | null>(null)
   const [importRows, setImportRows] = useState<Record<string, unknown>[] | null>(null)
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set())
+  const [memoOpen, setMemoOpen] = useState(false)
 
   async function cargar() {
     setLoading(true)
@@ -54,6 +57,10 @@ export default function Inventario() {
       supabase.from('v_usuarios_resumen').select('*').order('nombre_completo'),
       supabase.from('centros_distribucion').select('*').eq('activo', true).order('nombre'),
     ])
+    const fallo = eqRes.error ?? tRes.error ?? uRes.error ?? cRes.error
+    if (fallo) {
+      toast('error', `No se pudo cargar el inventario: ${fallo.message}`)
+    }
     if (eqRes.data) setEquipos(eqRes.data as Equipo[])
     if (tRes.data) setTipos(tRes.data as TipoEquipo[])
     if (uRes.data) setUsuarios(uRes.data as UsuarioResumen[])
@@ -93,6 +100,43 @@ export default function Inventario() {
     if (filtroTipo && eq.tipo_equipo_id !== filtroTipo) return false
     if (filtroEstado && eq.estado !== filtroEstado) return false
     return true
+  })
+
+  // ── Selección de filas (para memorandos y acciones en lote) ──────
+  const idsFiltrados = filtrados.map((eq) => eq.id)
+  const todosSeleccionados =
+    idsFiltrados.length > 0 && idsFiltrados.every((id) => seleccion.has(id))
+
+  function toggleSeleccion(id: string) {
+    setSeleccion((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleTodos() {
+    setSeleccion((prev) => {
+      if (todosSeleccionados) {
+        const next = new Set(prev)
+        idsFiltrados.forEach((id) => next.delete(id))
+        return next
+      }
+      return new Set([...prev, ...idsFiltrados])
+    })
+  }
+
+  const equiposSeleccionados = equipos.filter((eq) => seleccion.has(eq.id))
+
+  const filasMemo = equiposSeleccionados.map((eq) => {
+    const tipo = tipoPorId.get(eq.tipo_equipo_id ?? '')
+    return {
+      caracteristica: eq.codigo ?? tipo?.tipo ?? 'Equipo',
+      modelo: eq.modelo ?? tipo?.modelo ?? 'N/A',
+      marca: eq.marca ?? tipo?.marca ?? 'N/A',
+      serie: eq.serie,
+    }
   })
 
   async function eliminar(eq: Equipo) {
@@ -293,6 +337,18 @@ export default function Inventario() {
         </select>
       </div>
 
+      {seleccion.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+          <span className="font-medium">{seleccion.size} equipo(s) seleccionado(s)</span>
+          <button onClick={() => setMemoOpen(true)} className="btn-primary">
+            <FileDown size={15} /> Generar memorando
+          </button>
+          <button onClick={() => setSeleccion(new Set())} className="btn-secondary">
+            <X size={15} /> Limpiar selección
+          </button>
+        </div>
+      )}
+
       <div className="card overflow-x-auto p-0">
         {loading ? (
           <p className="p-4 text-sm text-slate-400">Cargando…</p>
@@ -304,6 +360,16 @@ export default function Inventario() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
+                <th className="w-8 px-3 py-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 cursor-pointer accent-blue-600"
+                    checked={todosSeleccionados}
+                    onChange={toggleTodos}
+                    title="Seleccionar todos los visibles"
+                    aria-label="Seleccionar todos"
+                  />
+                </th>
                 <th className="px-3 py-3 text-left">ID</th>
                 <th className="px-3 py-3 text-left">Tipo</th>
                 <th className="px-3 py-3 text-left">Modelo</th>
@@ -320,7 +386,16 @@ export default function Inventario() {
                 const usuario = usuarioPorId.get(eq.usuario_id ?? '')
                 const centro = centroPorId.get(eq.cd_id ?? '')
                 return (
-                  <tr key={eq.id}>
+                  <tr key={eq.id} className={seleccion.has(eq.id) ? 'bg-blue-50/60' : undefined}>
+                    <td className="px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 cursor-pointer accent-blue-600"
+                        checked={seleccion.has(eq.id)}
+                        onChange={() => toggleSeleccion(eq.id)}
+                        aria-label={`Seleccionar ${eq.serie}`}
+                      />
+                    </td>
                     <td className="px-3 py-2.5">
                       <span className="tag-id">{eq.codigo ?? '—'}</span>
                     </td>
@@ -378,6 +453,10 @@ export default function Inventario() {
           </table>
         )}
       </div>
+
+      {memoOpen && (
+        <MemoModal filas={filasMemo} centros={centros} onClose={() => setMemoOpen(false)} />
+      )}
 
       {formOpen && (
         <EquipoForm

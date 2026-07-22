@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Download, Pencil, Trash2, TriangleAlert, Search, FileText, Barcode, FileDown, X } from 'lucide-react'
+import { Plus, Download, Pencil, Trash2, TriangleAlert, Search, FileText, Barcode, FileDown, X, ArrowLeftRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUI } from '@/hooks/useUI'
 import EquipoForm from '@/components/EquipoForm'
 import FallaForm from '@/components/FallaForm'
 import EtiquetaModal from '@/components/EtiquetaModal'
+import TransferForm from '@/components/TransferForm'
 import ExcelImportButton from '@/components/ExcelImportButton'
 import ImportPreviewModal from '@/components/ImportPreviewModal'
 import MemoModal from '@/components/MemoModal'
@@ -44,6 +45,7 @@ export default function Inventario() {
   const [formOpen, setFormOpen] = useState(false)
   const [editando, setEditando] = useState<Equipo | null>(null)
   const [equipoParaFalla, setEquipoParaFalla] = useState<Equipo | null>(null)
+  const [equipoParaTransferir, setEquipoParaTransferir] = useState<Equipo | null>(null)
   const [equipoParaEtiqueta, setEquipoParaEtiqueta] = useState<Equipo | null>(null)
   const [importRows, setImportRows] = useState<Record<string, unknown>[] | null>(null)
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set())
@@ -418,6 +420,14 @@ export default function Inventario() {
                           <Barcode size={14} />
                         </button>
                         <button
+                          onClick={() => setEquipoParaTransferir(eq)}
+                          className="btn-secondary btn-icon"
+                          title="Transferir a otro CD"
+                          aria-label={`Transferir ${eq.serie}`}
+                        >
+                          <ArrowLeftRight size={14} />
+                        </button>
+                        <button
                           onClick={() => setEquipoParaFalla(eq)}
                           className="btn-secondary btn-icon"
                           title="Reportar falla"
@@ -471,6 +481,17 @@ export default function Inventario() {
 
       {equipoParaEtiqueta && (
         <EtiquetaModal equipo={equipoParaEtiqueta} onClose={() => setEquipoParaEtiqueta(null)} />
+      )}
+
+      {equipoParaTransferir && (
+        <TransferForm
+          equipoPreseleccionado={equipoParaTransferir}
+          equipos={equipos}
+          centros={centros}
+          usuarios={usuarios}
+          onClose={() => setEquipoParaTransferir(null)}
+          onSaved={cargar}
+        />
       )}
 
       {equipoParaFalla && (

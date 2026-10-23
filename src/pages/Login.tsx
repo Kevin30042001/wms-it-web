@@ -15,7 +15,7 @@ export default function Login() {
     setLoading(true)
     const { error } = await signIn(email, password)
     setLoading(false)
-    if (error) setError('Correo o contraseña incorrectos.')
+    if (error) setError(error)
   }
 
   return (
@@ -40,6 +40,7 @@ export default function Login() {
               type="email"
               required
               autoFocus
+              autoComplete="email"
               className="input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -51,6 +52,7 @@ export default function Login() {
             <input
               type="password"
               required
+              autoComplete="current-password"
               className="input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

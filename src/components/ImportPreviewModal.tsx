@@ -18,14 +18,17 @@ export default function ImportPreviewModal({
 }: ImportPreviewModalProps) {
   const [importing, setImporting] = useState(false)
   const [done, setDone] = useState<{ ok: number; fail: number } | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   async function handleConfirm() {
     setImporting(true)
+    setErrorMsg(null)
     try {
       await onConfirm(rows)
       setDone({ ok: rows.length, fail: 0 })
     } catch (e) {
       console.error(e)
+      setErrorMsg(e instanceof Error ? e.message : String(e))
       setDone({ ok: 0, fail: rows.length })
     } finally {
       setImporting(false)
@@ -40,8 +43,13 @@ export default function ImportPreviewModal({
           <p className="text-sm text-slate-600">
             {done.fail === 0
               ? `${done.ok} registro(s) importado(s) correctamente.`
-              : `Ocurrió un error durante la importación. Revisa la consola o intenta de nuevo.`}
+              : `Ocurrió un error durante la importación.`}
           </p>
+          {errorMsg && (
+            <p className="mx-auto mt-2 max-w-sm break-words rounded-md bg-red-50 px-3 py-2 text-left text-xs text-red-600">
+              {errorMsg}
+            </p>
+          )}
           <button onClick={onClose} className="btn-primary mt-4">
             Cerrar
           </button>

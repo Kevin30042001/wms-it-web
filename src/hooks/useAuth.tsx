@@ -31,7 +31,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error ? error.message : null }
+    if (!error) return { error: null }
+
+    // Un "Failed to fetch" / AuthRetryableFetchError significa que el
+    // navegador no pudo ni siquiera llegar a Supabase (VPN, proxy, sin
+    // internet...). Mostrarlo como "contraseña incorrecta" confunde: la
+    // contraseña nunca se llegó a validar.
+    const esErrorDeRed = error.name === 'AuthRetryableFetchError' || /fetch/i.test(error.message)
+    if (esErrorDeRed) {
+      return {
+        error: 'No se pudo conectar con el servidor. Revisa tu conexión a internet o VPN e intenta de nuevo.',
+      }
+    }
+    if (/invalid login credentials/i.test(error.message)) {
+      return { error: 'Correo o contraseña incorrectos.' }
+    }
+    return { error: error.message }
   }
 
   async function signOut() {

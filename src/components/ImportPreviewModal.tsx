@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from '@/components/Modal'
+import { describeError } from '@/lib/errors'
 
 interface ImportPreviewModalProps {
   title: string
@@ -28,7 +29,7 @@ export default function ImportPreviewModal({
       setDone({ ok: rows.length, fail: 0 })
     } catch (e) {
       console.error(e)
-      setErrorMsg(e instanceof Error ? e.message : String(e))
+      setErrorMsg(describeError(e))
       setDone({ ok: 0, fail: rows.length })
     } finally {
       setImporting(false)

@@ -12,6 +12,7 @@ import ImportPreviewModal from '@/components/ImportPreviewModal'
 import MemoModal from '@/components/MemoModal'
 import { exportToExcel } from '@/lib/excelExport'
 import { generarPDF } from '@/lib/pdf'
+import { describeError } from '@/lib/errors'
 import type {
   CentroDistribucion,
   Equipo,
@@ -217,13 +218,19 @@ export default function Inventario() {
     let ok = 0
     const fallos: string[] = []
     for (const row of payloadSinDuplicados) {
-      const { error: rowError } = await supabase
-        .from('equipos')
-        .upsert(row, { onConflict: 'serie', ignoreDuplicates: false })
-      if (rowError) {
-        fallos.push(`S/N ${row.serie} (ID ${row.codigo ?? 'sin ID'}): ${rowError.message}`)
-      } else {
-        ok++
+      try {
+        const { error: rowError } = await supabase
+          .from('equipos')
+          .upsert(row, { onConflict: 'serie', ignoreDuplicates: false })
+        if (rowError) {
+          fallos.push(`S/N ${row.serie} (ID ${row.codigo ?? 'sin ID'}): ${rowError.message}`)
+        } else {
+          ok++
+        }
+      } catch (rowException) {
+        // Un problema de red/sesión en ESTA fila no debe tumbar el resto del
+        // lote: lo anotamos y seguimos con la siguiente.
+        fallos.push(`S/N ${row.serie} (ID ${row.codigo ?? 'sin ID'}): ${describeError(rowException)}`)
       }
     }
     cargar()

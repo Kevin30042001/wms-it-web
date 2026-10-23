@@ -46,7 +46,7 @@ export default function ImportPreviewModal({
               : `Ocurrió un error durante la importación.`}
           </p>
           {errorMsg && (
-            <p className="mx-auto mt-2 max-w-sm break-words rounded-md bg-red-50 px-3 py-2 text-left text-xs text-red-600">
+            <p className="mx-auto mt-2 max-w-sm whitespace-pre-line break-words rounded-md bg-red-50 px-3 py-2 text-left text-xs text-red-600">
               {errorMsg}
             </p>
           )}

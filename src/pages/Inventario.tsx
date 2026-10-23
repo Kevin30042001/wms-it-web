@@ -195,18 +195,46 @@ export default function Inventario() {
     const { error } = await supabase
       .from('equipos')
       .upsert(payloadSinDuplicados, { onConflict: 'serie', ignoreDuplicates: false })
-    if (error) throw error
 
-    const descartados = payload.length - payloadSinDuplicados.length
-    if (descartados > 0) {
-      toast(
-        'info',
-        `Se importaron ${payloadSinDuplicados.length} equipos. ${descartados} fila(s) con S/N repetido en el Excel se combinaron en un solo registro.`
-      )
-    } else {
-      toast('success', `${payloadSinDuplicados.length} equipos importados correctamente.`)
+    if (!error) {
+      const descartados = payload.length - payloadSinDuplicados.length
+      if (descartados > 0) {
+        toast(
+          'info',
+          `Se importaron ${payloadSinDuplicados.length} equipos. ${descartados} fila(s) con S/N repetido en el Excel se combinaron en un solo registro.`
+        )
+      } else {
+        toast('success', `${payloadSinDuplicados.length} equipos importados correctamente.`)
+      }
+      cargar()
+      return
+    }
+
+    // El lote completo falló -- normalmente porque UNA fila choca contra otra
+    // restricción única (ej: el ID/código ya existe en otro equipo con distinto
+    // S/N). Reintentamos fila por fila para no perder las que sí son válidas,
+    // y para señalar exactamente cuál fila falló y por qué.
+    let ok = 0
+    const fallos: string[] = []
+    for (const row of payloadSinDuplicados) {
+      const { error: rowError } = await supabase
+        .from('equipos')
+        .upsert(row, { onConflict: 'serie', ignoreDuplicates: false })
+      if (rowError) {
+        fallos.push(`S/N ${row.serie} (ID ${row.codigo ?? 'sin ID'}): ${rowError.message}`)
+      } else {
+        ok++
+      }
     }
     cargar()
+    if (fallos.length === 0) {
+      toast('success', `${ok} equipos importados correctamente.`)
+      return
+    }
+    throw new Error(
+      `${ok} equipo(s) importados bien. ${fallos.length} fallaron:\n${fallos.slice(0, 5).join('\n')}` +
+        (fallos.length > 5 ? `\n...y ${fallos.length - 5} más.` : '')
+    )
   }
 
   return (

@@ -120,18 +120,19 @@ export default function Consumibles() {
         <div className="flex flex-wrap gap-2">
           <ExcelImportButton
             sheetNames={['CONSUMIBLES']}
+            headerRow={5}
             startRow={6}
-            mapRow={(row) => {
-              const nombre = String(row['B'] ?? '').trim()
+            mapRow={(row, col) => {
+              const nombre = String(col(row, 'Consumible') ?? '').trim()
               if (!nombre) return null
               return {
-                codigo: row['A'],
+                codigo: col(row, 'ID'),
                 nombre,
-                categoria: row['C'],
-                unidad: row['D'],
-                stock: row['E'],
-                stock_min: row['F'],
-                stock_max: row['G'],
+                categoria: col(row, 'Categoría'),
+                unidad: col(row, 'Unidad'),
+                stock: col(row, 'Stock'),
+                stock_min: col(row, 'Mín'),
+                stock_max: col(row, 'Máx'),
               }
             }}
             onParsed={setImportRows}

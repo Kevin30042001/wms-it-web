@@ -219,23 +219,28 @@ export default function Inventario() {
         <div className="flex flex-wrap gap-2">
           <ExcelImportButton
             sheetNames={['INVENTARIO']}
+            headerRow={5}
             startRow={6}
-            mapRow={(row) => {
-              const serie = String(row['E'] ?? '').trim()
+            mapRow={(row, col) => {
+              const serie = String(col(row, 'S/N') ?? '').trim()
               if (!serie) return null
-              const fecha = row['I']
+              const fecha = col(row, 'Fecha Ingreso')
               return {
-                codigo: row['A'] || null,
-                tipo: row['B'],
-                marca: row['C'],
-                modelo: row['D'],
+                codigo: col(row, 'ID') || null,
+                tipo: col(row, 'Tipo'),
+                marca: col(row, 'Marca'),
+                modelo: col(row, 'Modelo'),
                 serie,
-                usuario: row['F'],
-                cd: row['G'],
-                estado: row['H'] || 'Operativo',
+                usuario: col(row, 'Usuario Asignado'),
+                cd: col(row, 'CD / Ubicación'),
+                estado: col(row, 'Estado') || 'Operativo',
                 fecha_ingreso:
-                  fecha instanceof Date ? fecha.toISOString().slice(0, 10) : undefined,
-                observaciones: row['J'],
+                  fecha instanceof Date
+                    ? fecha.toISOString().slice(0, 10)
+                    : typeof fecha === 'string' && fecha
+                      ? fecha
+                      : undefined,
+                observaciones: col(row, 'Observaciones'),
               }
             }}
             onParsed={setImportRows}

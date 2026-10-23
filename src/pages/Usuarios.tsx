@@ -109,14 +109,15 @@ export default function Usuarios() {
         <div className="flex flex-wrap gap-2">
           <ExcelImportButton
             sheetNames={['USUARIOS']}
+            headerRow={5}
             startRow={6}
-            mapRow={(row) => {
-              const nombre = String(row['B'] ?? '').trim()
+            mapRow={(row, col) => {
+              const nombre = String(col(row, 'Nombre Completo') ?? '').trim()
               if (!nombre) return null
               return {
-                nombre: nombre,
-                numero_usuario: row['C'],
-                cargo: row['D'],
+                nombre,
+                numero_usuario: col(row, 'N° Usuario'),
+                cargo: col(row, 'Cargo'),
               }
             }}
             onParsed={setImportRows}

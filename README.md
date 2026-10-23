@@ -60,16 +60,36 @@ El esquema completo vive en `/sql` (fuera de este proyecto, en el paquete
 que ya tenés): `01_schema.sql` + `02_seguridad_rls.sql`, para correr en el
 SQL Editor de tu proyecto de Supabase.
 
+## Importar datos desde tu Excel (WMS_IT_DISEÑO_Visual.xlsm)
+
+Inventario, Usuarios y Consumibles tienen un botón **"Importar desde Excel"**.
+Sube el mismo `.xlsm` que usas hoy y la web:
+
+1. Busca la hoja correspondiente (`INVENTARIO`, `USUARIOS` o `CONSUMIBLES`).
+2. Lee los encabezados de la fila 5 **por nombre de columna** (no por letra
+   fija) -- si el día de mañana reordenas o agregas una columna en el Excel,
+   el import sigue funcionando mientras el título de la columna no cambie.
+3. Te muestra una vista previa antes de importar nada (no se sube a ningún
+   servidor, todo el parseo ocurre en tu navegador).
+
+Fallas y Transferencias no tienen importador masivo a propósito: son
+registros que se cargan de a uno (reportar una falla puntual, mover un
+equipo puntual), igual que en el Excel. Si eso cambia y necesitás cargar
+muchas de una vez, se puede agregar el mismo patrón que usan los otros tres
+módulos (ver `src/components/ExcelImportButton.tsx`).
+
 ## Módulos
 
 | Módulo | Estado |
 |---|---|
-| Login / Auth | ✅ listo |
-| Dashboard (KPIs + gráficos en vivo) | ✅ listo |
-| Inventario | 🔜 próximo — tabla + CRUD + importador de Excel |
-| Usuarios | 🔜 pendiente |
-| Fallas | 🔜 pendiente |
-| Consumibles | 🔜 pendiente |
-| Transferencias | 🔜 pendiente |
-| Historial | 🔜 pendiente |
-| Configuración | 🔜 pendiente |
+| Login / Auth | listo |
+| Dashboard (KPIs + gráficos en vivo) | listo |
+| Inventario (tabla + CRUD + importador de Excel) | listo |
+| Usuarios (CRUD + perfil + importador de Excel) | listo |
+| Fallas (CRUD + cierre + reporte PDF) | listo |
+| Consumibles (stock + semáforo + importador de Excel) | listo |
+| Transferencias (CRUD + confirmar/rechazar) | listo |
+| Historial | listo |
+| Configuración (catálogo de tipos + CDs) | listo |
+| Documentos (memorandos + entradas) | listo |
+
